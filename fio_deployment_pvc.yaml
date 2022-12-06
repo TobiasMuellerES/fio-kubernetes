@@ -16,33 +16,37 @@ spec:
         app: fio
     spec:
       containers:
-      - name: fio
-        image: joshuarobinson/fio:3.19
-        command: ["sh"]
-        args: ["-c", "echo ${HOSTNAME} && mkdir -p /scratch/${HOSTNAME} && fio /configs/fio.job --eta=never --directory=/scratch/${HOSTNAME}"]
-        volumeMounts:
-        - name: fio-config-vol
-          mountPath: /configs
-        - name: fio-data
-          mountPath: /scratch
-        imagePullPolicy: Always
+        - name: fio
+          image: ghcr.io/tobiasmuelleres/fio-kubernetes:master
+          command: ["sh"]
+          args:
+            [
+              "-c",
+              "echo ${HOSTNAME} && mkdir -p /scratch/${HOSTNAME} && fio /configs/fio.job --eta=never --directory=/scratch/${HOSTNAME}",
+            ]
+          volumeMounts:
+            - name: fio-config-vol
+              mountPath: /configs
+            - name: fio-data
+              mountPath: /scratch
+          imagePullPolicy: Always
       restartPolicy: Always
       volumes:
-      - name: fio-config-vol
-        configMap:
-          name: fio-job-config
-      - name: fio-data
-        persistentVolumeClaim:
-          claimName: fio-claim
+        - name: fio-config-vol
+          configMap:
+            name: fio-job-config
+        - name: fio-data
+          persistentVolumeClaim:
+            claimName: fio-claim
 ---
 kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
   name: fio-claim
 spec:
-  storageClassName: pure-file
+  storageClassName: longhorn
   accessModes:
-  - ReadWriteMany
+    - ReadWriteMany
   resources:
     requests:
-      storage: 1Ti
+      storage: 100Gi
